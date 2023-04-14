@@ -12,4 +12,4 @@ local_path_override(
 composer = use_extension("@rules_composer//:extensions.bzl", "composer")
 composer.install()
 
-use_repo(composer, "composer_deps")
+use_repo(composer, "composer")

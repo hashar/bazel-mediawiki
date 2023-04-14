@@ -1,1 +1,4 @@
+# Bazel symlinks
 /bazel-*
+# Local composer dependencies in case one ran composer install
+/vendor

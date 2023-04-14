@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -eu -o pipefail
+
+echo "==========[ QUERY ]============="
+bazel query @composer//...
+echo "==========[ GENERATED ]============="
+./dump-composer-BUILD
+echo "==========[ BUILD ]============="
+bazel build @composer//...
