@@ -1,18 +1,25 @@
 # Bazel rules for dependencies added via composer
 
 common_attrs = {
-    attrs={
+    "attrs": {
         "require": attr.label_list(allow_files=False),
         "require_dev": attr.label_list(allow_files=False),
-    },
+    }
+}
 
 def _composer_binary_impl(ctx):
-    pass
+    return [DefaultInfo(
+        executable = ctx.attr.binary,
+    )]
 
 composer_binary = rule(
     implementation = _composer_binary_impl,
-    **common_attrs,
     executable = True,
+    attrs = {
+        "binary": attr.label(mandatory=True, allow_single_file=True),
+        "require": attr.label_list(allow_files=False),
+        "require_dev": attr.label_list(allow_files=False),
+    }
 )
 
 def _composer_library_impl(ctx):
@@ -28,6 +35,6 @@ def _composer_test_impl(ctx):
 
 composer_test = rule(
     implementation = _composer_test_impl,
-    **common_attrs,
     test=True,
+    **common_attrs,
 )

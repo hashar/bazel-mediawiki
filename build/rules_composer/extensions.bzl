@@ -28,13 +28,13 @@ def _filter_platform_packages(requires):
         ))
     ]
 
-def _format_php_library(name, require=[], require_dev=[]):
+def _format_composer_library(name, require=[], require_dev=[]):
     if not require and not require_dev:
-        return "php_library(name=\"%s\")\n" % name
+        return "composer_library(name=\"%s\")\n" % name
 
-    indent = ' ' * len('php_library(')
+    indent = ' ' * len('composer_library(')
 
-    out = "php_library(name=\"%s\"" % name
+    out = "composer_library(name=\"%s\"" % name
     # FIXME avoid copy pasted code
     if require:
         out += ",\n"
@@ -151,27 +151,26 @@ def _composer_install_impl(repository_ctx):
         for transitive_req in transitive_reqs:
             if transitive_req in seen:
                 continue
-            libs += _format_php_library(transitive_req)
+            libs += _format_composer_library(transitive_req)
             seen[transitive_req] = True
 
         if requirement not in seen:
-            libs += _format_php_library(requirement, require=transitive_reqs)
+            libs += _format_composer_library(requirement, require=transitive_reqs)
             seen[requirement] = True
 
     repository_ctx.report_progress("Installing package binaries")
     for package in composer_lock["packages"] + composer_lock["packages-dev"]:
         for binary in package.get("bin", []):
-            # XXX STRIP PREFIXES :(
-
-            #binfile = repository_ctx.path('vendor/%s/%s' % (package['name'], binary))
-            binfile = repository_ctx.path('vendor').get_child(package['name'], binary)
+            bin_src = repository_ctx.path('vendor').get_child(package['name'], binary)
+            vendor_bin = repository_ctx.path('vendor/bin').get_child(bin_src.basename)
             repository_ctx.file(
-                'vendor/bin/%s' % binfile.basename,
-                content = repository_ctx.read(binfile),
+                vendor_bin,
+                content = repository_ctx.read(bin_src),
                 executable = True,
             )
             # TODO add dep/require?
-            binaries += 'php_binary(name="%s")\n' % binfile.basename
+            # TODO should we move the logic above inside _composer_binary_impl??
+            binaries += 'composer_binary(name="%s", binary="%s")\n' % (vendor_bin.basename, vendor_bin)
 
     #deps = ([package["name"] for package in composer_lock["packages"]])
     #return [DefaultInfo(files = depset([deps]))]
@@ -197,7 +196,7 @@ exports_files(["{composer_json}", "{composer_lock}"])
     composer_lock = "imported_composer_lock",
     libs = libs,
     binaries = binaries,
-    deps_target = _format_php_library("deps", require=require, require_dev=require_dev)
+    deps_target = _format_composer_library("deps", require=require, require_dev=require_dev)
     ),
         executable = False,
     )
