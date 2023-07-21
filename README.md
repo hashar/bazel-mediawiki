@@ -3,6 +3,19 @@ Proof of concept to ultimately run MediaWiki core tests with Bazel.
 Maybe check "Bzlmod Lock File" proposal:
 https://docs.google.com/document/d/1HPeH_L-lRK54g8A27gv0q7cbk18nwJ-jOq_14XEiZdc/edit?pli=1
 
+Upstream docs
+=============
+
+https://bazel.build/extending/concepts explains Bazel three phases:
+* LOADING: evaluate BUILD files to instantiate rules and evalute macros.
+* ANALYSIS: implementation of rules executed and actions instantiated.
+* EXECUTION: execute actions
+
+https://bazel.build/extending/rules
+
+https://bazel.build/extending/macros
+Instantiate rules during LOADING phase.
+
 Things ™
 ========
 

@@ -1,2 +1,4 @@
-# Or even better:
-bazel query --noshow_progress @composer//:all --output build|egrep -v '^#'
+#!/bin/bash
+set -eu -o pipefail
+
+exec bazel query --noshow_progress @composer//:all --output build|egrep -v '^#'

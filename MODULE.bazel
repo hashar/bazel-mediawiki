@@ -13,3 +13,5 @@ composer = use_extension("@rules_composer//:extensions.bzl", "composer")
 composer.install()
 
 use_repo(composer, "composer")
+
+composer.run(binary = 'jsonlint')

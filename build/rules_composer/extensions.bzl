@@ -28,13 +28,13 @@ def _filter_platform_packages(requires):
         ))
     ]
 
-def _format_composer_library(name, require=[], require_dev=[]):
+def _format_composer_package(name, require=[], require_dev=[]):
     if not require and not require_dev:
-        return "composer_library(name=\"%s\")\n" % name
+        return "composer_package(name=\"%s\")\n" % name
 
-    indent = ' ' * len('composer_library(')
+    indent = ' ' * len('composer_package(')
 
-    out = "composer_library(name=\"%s\"" % name
+    out = "composer_package(name=\"%s\"" % name
     # FIXME avoid copy pasted code
     if require:
         out += ",\n"
@@ -151,11 +151,11 @@ def _composer_install_impl(repository_ctx):
         for transitive_req in transitive_reqs:
             if transitive_req in seen:
                 continue
-            libs += _format_composer_library(transitive_req)
+            libs += _format_composer_package(transitive_req)
             seen[transitive_req] = True
 
         if requirement not in seen:
-            libs += _format_composer_library(requirement, require=transitive_reqs)
+            libs += _format_composer_package(requirement, require=transitive_reqs)
             seen[requirement] = True
 
     repository_ctx.report_progress("Installing package binaries")
@@ -170,7 +170,9 @@ def _composer_install_impl(repository_ctx):
             )
             # TODO add dep/require?
             # TODO should we move the logic above inside _composer_binary_impl??
-            binaries += 'composer_binary(name="%s", binary="%s")\n' % (vendor_bin.basename, vendor_bin)
+            binary_label = Label(bin_src.basename)
+            binaries += 'composer_binary(name="%s", binary="%s")\n' % (vendor_bin.basename, binary_label)
+
 
     #deps = ([package["name"] for package in composer_lock["packages"]])
     #return [DefaultInfo(files = depset([deps]))]
@@ -181,7 +183,7 @@ def _composer_install_impl(repository_ctx):
     repository_ctx.file("BUILD.bazel",
 """\
 package(default_visibility = ["//visibility:public"])
-load("@rules_composer//:composer.bzl", "composer_binary", "composer_library")
+load("@rules_composer//:composer.bzl", "composer_binary", "composer_package")
 
 exports_files(["{composer_json}", "{composer_lock}"])
 #exports_files(glob(["bin/*"]))
@@ -196,7 +198,7 @@ exports_files(["{composer_json}", "{composer_lock}"])
     composer_lock = "imported_composer_lock",
     libs = libs,
     binaries = binaries,
-    deps_target = _format_composer_library("deps", require=require, require_dev=require_dev)
+    deps_target = _format_composer_package("deps", require=require, require_dev=require_dev)
     ),
         executable = False,
     )
@@ -226,10 +228,13 @@ def _composer_impl(module_ctx):
         for install in mod.tags.install:
             composer_install(name = "composer")
         for run in mod.tags.run:
+            module_ctx.report_progress("composer run")
+            #composer_home = module_ctx.path('composer_home')
+            #module_ctx.execute(['/usr/bin/mkdir', '-p', composer_home])
             module_ctx.execute(
                 [_get_composer_path(module_ctx)],
                 environment = {
-                    'COMPOSER_HOME': module_ctx.path('composer_home')
+                    'COMPOSER_HOME': 'composer_home',
                 },
             )
 

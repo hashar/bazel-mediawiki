@@ -8,9 +8,30 @@ common_attrs = {
 }
 
 def _composer_binary_impl(ctx):
-    return [DefaultInfo(
+    output_file = ctx.actions.declare_file(ctx.label.name + ".output")
+    runfiles = ctx.runfiles(files = ctx.attr.binary)
+
+    ctx.actions.run(
         executable = ctx.attr.binary,
-    )]
+        arguments = [ctx.actions.args()],
+        outputs = [output_file],
+    )
+
+    return [
+        DefaultInfo(
+            files = depset([output_file]),
+            runfiles = runfiles
+        )
+    ]
+
+    # Default output https://bazel.build/extending/rules#default_outputs
+    #return [
+    #    DefaultInfo(files = depset([output_file])
+    #]
+    # Copy pasted from some where
+    #return [DefaultInfo(
+    #    executable = ctx.attr.binary,
+    #)]
 
 composer_binary = rule(
     implementation = _composer_binary_impl,
@@ -22,11 +43,11 @@ composer_binary = rule(
     }
 )
 
-def _composer_library_impl(ctx):
+def _composer_package_impl(ctx):
     pass
 
-composer_library = rule(
-    implementation = _composer_library_impl,
+composer_package = rule(
+    implementation = _composer_package_impl,
     **common_attrs,
 )
 
