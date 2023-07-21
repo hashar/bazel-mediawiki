@@ -6,7 +6,7 @@ module(
 bazel_dep(name = "rules_composer", version = "")
 local_path_override(
     module_name = "rules_composer",
-    path = "./build/rules_composer",
+    path = "./rules_composer",
     )
 
 composer = use_extension("@rules_composer//:extensions.bzl", "composer")
