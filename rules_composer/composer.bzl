@@ -9,10 +9,19 @@ common_attrs = {
 
 def _composer_binary_impl(ctx):
     output_file = ctx.actions.declare_file(ctx.label.name + ".output")
-    runfiles = ctx.runfiles(files = ctx.attr.binary)
+    binary_file = ctx.attr.binary.files.to_list()[0]
+    runfiles = ctx.runfiles(files = [binary_file])
+
+
+    execf = ctx.actions.declare_file(binary_file.path)
+    ctx.actions.symlink(
+        output = execf,
+        target_file = binary_file,
+        is_executable = True,
+    )
 
     ctx.actions.run(
-        executable = ctx.attr.binary,
+        executable = execf,
         arguments = [ctx.actions.args()],
         outputs = [output_file],
     )
@@ -20,6 +29,7 @@ def _composer_binary_impl(ctx):
     return [
         DefaultInfo(
             files = depset([output_file]),
+            executable = execf,
             runfiles = runfiles
         )
     ]

@@ -171,7 +171,8 @@ def _composer_install_impl(repository_ctx):
             # TODO add dep/require?
             # TODO should we move the logic above inside _composer_binary_impl??
             binary_label = Label(bin_src.basename)
-            binaries += 'composer_binary(name="%s", binary="%s")\n' % (vendor_bin.basename, binary_label)
+            #binaries += 'composer_binary(name="%s", binary="%s")\n' % (vendor_bin.basename, binary_label)
+            binaries += 'composer_binary(name="%s", binary=":vendor/%s")\n' % (vendor_bin.basename, binary)
 
 
     #deps = ([package["name"] for package in composer_lock["packages"]])
