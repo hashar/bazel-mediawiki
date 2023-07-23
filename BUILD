@@ -5,7 +5,7 @@
 sh_test(
     name = "lintjson",
     srcs = [
-        "@composer//:jsonlint",
+        "@composer//:vendor/bin/jsonlint",
     ],
     size = "small",
     args = glob(["**/*.json"])

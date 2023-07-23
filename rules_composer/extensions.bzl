@@ -158,22 +158,21 @@ def _composer_install_impl(repository_ctx):
             libs += _format_composer_package(requirement, require=transitive_reqs)
             seen[requirement] = True
 
-    repository_ctx.report_progress("Installing package binaries")
+    repository_ctx.report_progress("Installing packages binaries")
     for package in composer_lock["packages"] + composer_lock["packages-dev"]:
         for binary in package.get("bin", []):
-            bin_src = repository_ctx.path('vendor').get_child(package['name'], binary)
-            vendor_bin = repository_ctx.path('vendor/bin').get_child(bin_src.basename)
+            bin_src = vendor_path.get_child(package['name'], binary)
+
             repository_ctx.file(
-                vendor_bin,
+                vendor_path.get_child(binary),
                 content = repository_ctx.read(bin_src),
                 executable = True,
             )
             # TODO add dep/require?
             # TODO should we move the logic above inside _composer_binary_impl??
             binary_label = Label(bin_src.basename)
-            #binaries += 'composer_binary(name="%s", binary="%s")\n' % (vendor_bin.basename, binary_label)
-            binaries += 'composer_binary(name="%s", binary=":vendor/%s")\n' % (vendor_bin.basename, binary)
-
+            binaries += 'composer_binary(name="%s", binary=":vendor/%s")\n' % (binary, binary)
+            # FIXME add require
 
     #deps = ([package["name"] for package in composer_lock["packages"]])
     #return [DefaultInfo(files = depset([deps]))]
