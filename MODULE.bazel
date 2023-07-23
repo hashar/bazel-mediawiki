@@ -14,4 +14,4 @@ composer.install()
 
 use_repo(composer, "composer")
 
-composer.run(binary = 'jsonlint')
+#composer.run(binary = 'jsonlint')

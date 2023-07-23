@@ -1,18 +1,11 @@
 # Bazel rules for dependencies added via composer
 
-common_attrs = {
-    "attrs": {
-        "require": attr.label_list(allow_files=False),
-        "require_dev": attr.label_list(allow_files=False),
-    }
-}
-
 def _composer_binary_impl(ctx):
     output_file = ctx.actions.declare_file(ctx.label.name + ".output")
     binary_file = ctx.attr.binary.files.to_list()[0]
     runfiles = ctx.runfiles(files = [binary_file])
 
-
+    # Use `composer exec -- <binary> <args>`
     execf = ctx.actions.declare_file(binary_file.path)
     ctx.actions.symlink(
         output = execf,
@@ -58,14 +51,21 @@ def _composer_package_impl(ctx):
 
 composer_package = rule(
     implementation = _composer_package_impl,
-    **common_attrs,
+    attrs = {
+        "require": attr.label_list(allow_files=False),
+        "require_dev": attr.label_list(allow_files=False),
+    }
 )
 
 def _composer_test_impl(ctx):
-    pass
+    return _composer_binary_impl(ctx)
 
 composer_test = rule(
     implementation = _composer_test_impl,
     test=True,
-    **common_attrs,
+    attrs = {
+        "binary": attr.label(mandatory=True, allow_files=True),
+        "require": attr.label_list(allow_files=False),
+        "require_dev": attr.label_list(allow_files=False),
+    }
 )

@@ -28,26 +28,43 @@ def _filter_platform_packages(requires):
         ))
     ]
 
-def _format_composer_package(name, require=[], require_dev=[]):
-    if not require and not require_dev:
-        return "composer_package(name=\"%s\")\n" % name
+def _format_composer_binary(*args, **kwargs):
+    return _format_composer_rule("binary", *args, **kwargs)
 
-    indent = ' ' * len('composer_package(')
+def _format_composer_package(*args, **kwargs):
+    return _format_composer_rule("package", *args, **kwargs)
 
-    out = "composer_package(name=\"%s\"" % name
-    # FIXME avoid copy pasted code
-    if require:
+def _format_composer_rule(kind, name, **kwargs):
+    indent = ' ' * len('composer_%s(' % kind)
+
+    out = "composer_%s(name=\"%s\"" % (kind, name)
+
+
+    # Compact view when none of the arguments have values since they are skip
+    # below anyway.
+    if not [setarg for (setarg, values) in kwargs.items() if len(values)]:
+        return out + ")\n"
+
+    for (arg, values) in kwargs.items():
         out += ",\n"
-        out += indent + "require=[\n"
-        for r in require:
-            out +=  indent + "  \"%s\",\n" % r
-        out += indent + "]"
-    if require_dev:
-        out += ",\n"
-        out += indent + "require_dev=[\n"
-        for r in require_dev:
-            out +=  indent + "  \"%s\",\n" % r
-        out += indent + "]\n"
+        if 'list' == type(values):
+            if len(values) == 0:
+                continue
+            elif len(values) == 1:
+                out += indent + '%s=["%s"]' % (arg, values[0])
+            else:
+                out += indent + arg + "=[\n"
+                for v in values:
+                    out +=  indent + "  \"%s\",\n" % v
+                out += indent + "]"
+        elif 'string' == type(values):
+            out += indent + '%s="%s"' % (arg, values)
+        else:
+            fail(
+                "Unrecognized type '%s' for '%s=%s'" % (
+                    type(values), arg, values
+                )
+            )
     out += ")\n"
 
     return out
@@ -127,7 +144,7 @@ def _composer_install_impl(repository_ctx):
 
     repository_ctx.report_progress("Processing composer dependencies..")
 
-    # Packages names requested developers
+    # Packages names requested by developers
     require = _filter_platform_packages(composer_json.get("require", {}).keys())
     require_dev = _filter_platform_packages(composer_json.get("require-dev", {}).keys())
 
@@ -171,7 +188,13 @@ def _composer_install_impl(repository_ctx):
             # TODO add dep/require?
             # TODO should we move the logic above inside _composer_binary_impl??
             binary_label = Label(bin_src.basename)
-            binaries += 'composer_binary(name="%s", binary=":vendor/%s")\n' % (binary, binary)
+            #binaries += 'composer_binary(name="%s", binary=":vendor/%s")\n' % (binary, binary)
+            binaries += _format_composer_binary(
+                name=binary,
+                binary=":vendor/%s" % binary,
+                require=[package["name"]]
+            )
+
             # FIXME add require
 
     #deps = ([package["name"] for package in composer_lock["packages"]])
@@ -186,12 +209,16 @@ package(default_visibility = ["//visibility:public"])
 load("@rules_composer//:composer.bzl", "composer_binary", "composer_package")
 
 exports_files(["{composer_json}", "{composer_lock}"])
-#exports_files(glob(["bin/*"]))
+
+####### Libraries ###################################
 
 {libs}
 
+####### Binaries ####################################
+
 {binaries}
 
+# Define a 'deps' target which depends on everything
 {deps_target}
 """.format(
     composer_json = "imported_composer.json",

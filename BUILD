@@ -2,11 +2,11 @@
 #composer.install()
 #composer.run('jsonlint')
 
-sh_test(
+load("@rules_composer//:composer.bzl", "composer_test")
+
+composer_test(
     name = "lintjson",
-    srcs = [
-        "@composer//:vendor/bin/jsonlint",
-    ],
+    binary = "@composer//:bin/jsonlint",
     size = "small",
     args = glob(["**/*.json"])
 )
