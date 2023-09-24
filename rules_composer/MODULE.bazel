@@ -2,3 +2,5 @@ module(
     name = "rules_composer",
     version = "0.0.1",
 )
+
+bazel_dep(name = "stardoc", version = "0.6.2", repo_name = "io_bazel_stardoc")
